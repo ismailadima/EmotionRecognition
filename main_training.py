@@ -10,13 +10,13 @@ VERBOSE = 1 #Verbosity mode 0 = silent, 1 = progress bar, 2 = one line per epoch
 NB_CLASSES = 7  #jumlah output emosi (kelas target)
 N_HIDDEN = 1000 #jumlah hidden layer
 N_LINES = 1   #jumlah baris yang mewakili 1 data
-N_INPUTFILES = 2800 #jumlah data
+N_INPUTFILES = 2786 #jumlah data (2800-14 karena 2 dari masing2 data dijadikan datatest)
 BATCH_SIZE = 10 #Number of samples per evaluation step. If unspecified, batch_size will default to 32.
 
 # LOAD MFCC
 data = np.genfromtxt("data_mfcc.csv", delimiter=",")
 X = [i for i in data[:,0:12]]       #mengambil data pada kolom 0-11
-Y = [int(i-1) for i in data[:,-1]]  #mengambil data pada kolom pertama dari akhir kolom
+Y = [int(i) for i in data[:,-1]]  #mengambil data pada kolom pertama dari akhir kolom
 
 # Merubah list ke array numpy (list ke data frame)
 X = np.array(X)
@@ -25,6 +25,10 @@ Y = np.array(Y)
 # Normalized X
 max = np.amax(X)
 min = np.amin(X)
+minmax = []
+minmax.append(min)
+minmax.append(max)
+np.savetxt("data_minmax.csv", minmax, fmt="%.8f", delimiter=",")
 X_normalized = (X-min) / (max-min)
 
 # Convert class vector ke binnary class matrics
@@ -51,7 +55,10 @@ model.summary()
 
 # compile model dengan Adam optimizer
 model.compile(loss='binary_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
+
+# clone model
 model_normalize = model
+best_model = model
 
 # fold validation k = 10
 k_fold = KFold(n_splits=10)
@@ -119,14 +126,14 @@ if max_score >= max_score_normilazed :
         print("Tanpa normalisasi, dengan score {} dan iterasi: \ntrain = {}\ntest = {}".format(max_score, train, test))
 
     # simpan model
-    model.fit(X[train], Y[train], batch_size=BATCH_SIZE, epochs=NB_EPOCH, verbose=0)
-    model.save('model.h5')
+    best_model.fit(X[train], Y[train], batch_size=BATCH_SIZE, epochs=NB_EPOCH, verbose=0)
+    best_model.save('model.h5')
     print("Model tersimpan")
 else :
     (train, test) = best_indices_normalized
     print("Dengan normalisasi, memiliki score {} dan iterasi: \ntrain = {}\ntest = {}".format(max_score_normilazed, train, test))
 
     # simpan model
-    model_normalize.fit(X_normalized[train], Y[train], batch_size=BATCH_SIZE, epochs=NB_EPOCH, verbose=0)
-    model_normalize.save('model.h5')
+    best_model.fit(X_normalized[train], Y[train], batch_size=BATCH_SIZE, epochs=NB_EPOCH, verbose=0)
+    best_model.save('model.h5')
     print("Model tersimpan")
