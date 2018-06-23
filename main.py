@@ -6,18 +6,19 @@ from sklearn.model_selection import KFold
 
 # Setting Network dan Training
 NB_EPOCH = 25
-VERBOSE = 0 #Verbosity mode 0 = silent, 1 = progress bar, 2 = one line per epoch.
+VERBOSE = 1 #Verbosity mode 0 = silent, 1 = progress bar, 2 = one line per epoch.
 NB_CLASSES = 7  #jumlah output emosi (kelas target)
 N_HIDDEN = 1000 #jumlah hidden layer
-N_LINES = 1   #jumlah data
-N_INPUTFILES = 2800
-BATCH_SIZE = 10
+N_LINES = 1   #jumlah baris yang mewakili 1 data
+N_INPUTFILES = 2800 #jumlah data
+BATCH_SIZE = 10 #Number of samples per evaluation step. If unspecified, batch_size will default to 32.
 
 # LOAD MFCC
 data = np.genfromtxt("data_mfcc.csv", delimiter=",")
-X = [i for i in data[:,0:12]]
-Y = [int(i-1) for i in data[:,-1]]
+X = [i for i in data[:,0:12]]       #mengambil data pada kolom 0-11
+Y = [int(i-1) for i in data[:,-1]]  #mengambil data pada kolom pertama dari akhir kolom
 
+# Merubah list ke array numpy (list ke data frame)
 X = np.array(X)
 Y = np.array(Y)
 
@@ -59,8 +60,8 @@ sum_score = 0
 sum_score_normalized = 0
 max_score = 0
 max_score_normilazed = 0
-best_indices = () #train, test
-best_indices_normalized = ()
+best_indices = () #(train, test)
+best_indices_normalized = () #(train, test)
 
 for train_indices, test_indices in k_fold.split(X):
     # penambahan k untuk print
@@ -83,12 +84,12 @@ for train_indices, test_indices in k_fold.split(X):
     score = model.evaluate(X_test, Y_test)
     score_normilized = model_normalize.evaluate(X_test_normalized, Y_test)
 
-    if max_score < score[1]:
-        max_score = score[1]
+    if max_score < score[1] * 100:
+        max_score = score[1] * 100
         best_indices = (train_indices, test_indices)
 
-    if max_score_normilazed < score_normilized[1]:
-        max_score_normilazed = score_normilized[1]
+    if max_score_normilazed < score_normilized[1] * 100:
+        max_score_normilazed = score_normilized[1] * 100
         best_indices_normalized = (train_indices, test_indices)
 
     print("\n###########################################################################  Fold ke-{}\n".format(k))
@@ -108,9 +109,24 @@ print("Dengan Normalisasi : {}".format(avg_score_normalized))
 
 
 print("\nAkurasi Terbaik")
-if max_score > max_score_normilazed :
-    print("Tanpa normalisasi, dengan score {} dan iterasi (train, test) = {}".format(max_score), best_indices)
-elif max_score < max_score_normilazed :
-    print("Dengan normalisasi, dengan score {} dan iterasi (train, test) = {}".format(max_score_normilazed), best_indices_normalized)
-else:
-    print("Tanpa maupun dengan normalisasi memiliki score yang sama yait {}, dengan iterasi (train, test) = {}".format(max_score), best_indices)
+if max_score >= max_score_normilazed :
+    (train, test) = best_indices
+    if max_score == max_score_normilazed :
+        print(
+            "Tanpa maupun dengan normalisasi memiliki score yang sama yaitu {}, dengan iterasi: \ntrain = {}\ntest = {}".format(
+                max_score, train, test))
+    else:
+        print("Tanpa normalisasi, dengan score {} dan iterasi: \ntrain = {}\ntest = {}".format(max_score, train, test))
+
+    # simpan model
+    model.fit(X[train], Y[train], batch_size=BATCH_SIZE, epochs=NB_EPOCH, verbose=0)
+    model.save('model.h5')
+    print("Model tersimpan")
+else :
+    (train, test) = best_indices_normalized
+    print("Dengan normalisasi, memiliki score {} dan iterasi: \ntrain = {}\ntest = {}".format(max_score_normilazed, train, test))
+
+    # simpan model
+    model_normalize.fit(X_normalized[train], Y[train], batch_size=BATCH_SIZE, epochs=NB_EPOCH, verbose=0)
+    model_normalize.save('model.h5')
+    print("Model tersimpan")
