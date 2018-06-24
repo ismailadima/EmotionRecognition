@@ -7,7 +7,7 @@ def avgMFCC(mfcc,kelas):
     temp = []
     for i in range(len(mfcc)):
         temp.append(np.average(mfcc[i]))
-    temp.append(kelas+1)
+    temp.append(kelas)
     return temp
 
 dataMFCC = []
@@ -24,7 +24,5 @@ for j in range(1,201):
         mfccs = avgMFCC(mfcc,i)
         dataMFCC.append(mfccs)
 
-
-print(len(dataMFCC), dataMFCC[0])
-
 np.savetxt("data_mfcc.csv", dataMFCC, fmt="%.8f", delimiter=",")
+print("{} data MFCC telah tersimpan".format(len(dataMFCC)))
