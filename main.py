@@ -16,7 +16,7 @@ BATCH_SIZE = 10 #Number of samples per evaluation step. If unspecified, batch_si
 # LOAD MFCC
 data = np.genfromtxt("data_mfcc.csv", delimiter=",")
 X = [i for i in data[:,0:12]]       #mengambil data pada kolom 0-11
-Y = [int(i-1) for i in data[:,-1]]  #mengambil data pada kolom pertama dari akhir kolom
+Y = [int(i) for i in data[:,-1]]  #mengambil data pada kolom pertama dari akhir kolom
 
 # Merubah list ke array numpy (list ke data frame)
 X = np.array(X)
